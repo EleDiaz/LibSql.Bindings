@@ -1,0 +1,77 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>LibSql.Bindings</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Eleazar Díaz Delgado</Authors>
+    <Description>Bindings towards the libsql rust library.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/EleDiaz/LibSql.Bindings</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/EleDiaz/LibSql.Bindings</RepositoryUrl>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RuntimeIdentifiers>linux-x64;linux-arm</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!-- Build our rust libs -->
+  <Target Name="BuildRustLib" BeforeTargets="Build">
+    <!-- Linux arm -->
+    <Exec Command="cross build --target aarch64-unknown-linux-gnu"
+      Condition=" '$(Configuration)' == 'Debug'  AND '$(RuntimeIdentifier)' == 'linux-arm'"
+      WorkingDirectory="rust"/>
+    <Exec Command="cross build --target aarch64-unknown-linux-gnu --release"
+      Condition=" '$(Configuration)' == 'Release'  AND '$(RuntimeIdentifier)' == 'linux-arm'"
+      WorkingDirectory="rust"/>
+
+    <!-- Linux x64 -->
+    <Exec Command="cross build --target x86_64-unknown-linux-gnu"
+      Condition=" '$(Configuration)' == 'Debug'  AND '$(RuntimeIdentifier)' == 'linux-x64'"
+      WorkingDirectory="rust"/>
+    <Exec Command="cross build --target x86_64-unknown-linux-gnu --release"
+      Condition=" '$(Configuration)' == 'Release'  AND '$(RuntimeIdentifier)' == 'linux-x64'"
+      WorkingDirectory="rust"/>
+  </Target>
+
+  <ItemGroup>
+    <!-- Linux x64 -->
+    <None Update="rust/target/x86_64-unknown-linux-gnu/release/liblibsql_cs.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Condition> '$(RuntimeIdentifier)' == 'linux-x64' AND '$(Configuration)' == 'Release' </Condition>
+      <Link>libsql_cs.so</Link>
+    </None>
+    <None Update="rust/target/x86_64-unknown-linux-gnu/debug/liblibsql_cs.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Condition> '$(RuntimeIdentifier)' == 'linux-x64' AND '$(Configuration)' == 'Debug' </Condition>
+      <Link>libsql_cs.so</Link>
+    </None>
+
+    <!-- Linux arm -->
+    <None Update="rust/target/aarch64-unknown-linux-gnu/release/liblibsql_cs.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Condition> '$(RuntimeIdentifier)' == 'linux-arm' AND '$(Configuration)' == 'Release' </Condition>
+      <Link>libsql_cs.so</Link>
+    </None>
+    <None Update="rust/target/aarch64-unknown-linux-gnu/debug/liblibsql_cs.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Condition> '$(RuntimeIdentifier)' == 'linux-arm' AND '$(Configuration)' == 'Debug' </Condition>
+      <Link>libsql_cs.so</Link>
+    </None>
+
+    <!-- Windows -->
+    <!-- <None Update="rust/target/x86_64-pc-windows-gnu/release/libsql_cs.dll"> -->
+    <!--   <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory> -->
+    <!--   <Condition> '$(RuntimeIdentifier)' == 'windows' </Condition> -->
+    <!--   <Link>libsql_cs.dll</Link> -->
+    <!-- </None> -->
+
+    <!-- mac -->
+    <!-- <None Update="native/linux-x64/libsql.dynlib"> -->
+    <!--   <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory> -->
+    <!--   <Condition> '$(RuntimeIdentifier)' == 'mac' </Condition> -->
+    <!-- </None> -->
+  </ItemGroup>
+
+</Project>
