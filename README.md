@@ -1,10 +1,12 @@
 # LibSql.Bindings
 
-Bindings in progress for the Rust library [libsql](https://github.com/tursodatabase/libsql), designed to integrate with .NET. 
+Bindings in progress for the Rust library [libsql](https://github.com/tursodatabase/libsql), designed to integrate with .NET.
 
-This library takes a different approach than [https://github.com/tvandinther/libsql-client-dotnet](https://github.com/tvandinther/libsql-client-dotnet), although both are based on c-bindings of libSql, I had added some modifications to those bindings, and this project don't use **csbindgen** tooling, although I wouldn't mind to be added back, if it was able to generate files like my *FFI.cs
+This library takes a different approach than [https://github.com/tvandinther/libsql-client-dotnet](https://github.com/tvandinther/libsql-client-dotnet). Although both are based on C bindings of libSQL, I have made some modifications to those bindings, removing some wrapper types (no idea what practical use can have for C#) and filling all the missing API.
 
-So, the idea is to provide a simple base to work with, without having to deal with minor marshalling issues around the FFI. And that is why the usage of **LibraryImport** from **.NET 7**, SafeHandler API where is possible.
+This project doesn't use the **csbindgen** tooling, though I wouldn't mind adding it back if it could generate files like my *FFI.cs.
+
+The goal is to provide a simple foundation to work with, avoiding minor marshalling issues around the FFI. That's why I'm using **LibraryImport** from **.NET 7** and the **SafeHandle** API where possible.
 
 ## Build Instructions
 
@@ -34,10 +36,9 @@ dotnet build -c Release --runtime linux-x64
 
 The following features are either incomplete or require further development as of this writing:
 
-- Batch rows: Needs implementation.
 - Transaction handling: The actual transaction API feels prone to error (inherited from rust lib)
-- Safe handlers: Certain utility classes (in Utils.cs) could benefit from safer memory handling.
-- Testing: More comprehensive test coverage is needed.
+- Batch rows: Needs Testing
+- Testing: More comprehensive test coverage is needed. And test for leaks.
 
 ## Future Considerations
 

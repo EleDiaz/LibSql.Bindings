@@ -37,7 +37,7 @@ public partial class Statements : IDisposable
             var posVals = new PositionalValues(positionalValues);
             var errorCode = libsql_query_stmt_positional(
                 _statements,
-                posVals._positionalValues,
+                posVals._positionalValues.DangerousGetHandle(),
                 out rows,
                 out err
             );
@@ -55,7 +55,7 @@ public partial class Statements : IDisposable
             var namedVals = new NamedValues(namedValues);
             var errorCode = libsql_query_stmt_named(
                 _statements,
-                namedVals._namedValues,
+                namedVals._namedValuesHandle.DangerousGetHandle(),
                 out rows,
                 out err
             );
@@ -86,7 +86,7 @@ public partial class Statements : IDisposable
             var posVals = new PositionalValues(positionalValues);
             var errorCode = libsql_execute_stmt_positional(
                 _statements,
-                posVals._positionalValues,
+                posVals._positionalValues.DangerousGetHandle(),
                 out rows_changed,
                 out err
             );
@@ -104,7 +104,7 @@ public partial class Statements : IDisposable
             var namedVals = new NamedValues(namedValues);
             var errorCode = libsql_execute_stmt_named(
                 _statements,
-                namedVals._namedValues,
+                namedVals._namedValuesHandle.DangerousGetHandle(),
                 out rows_changed,
                 out err
             );
@@ -131,7 +131,7 @@ public partial class Statements : IDisposable
             var posVals = new PositionalValues(positionalValues);
             var errorCode = libsql_run_stmt_positional(
                 _statements,
-                posVals._positionalValues,
+                posVals._positionalValues.DangerousGetHandle(),
                 out err
             );
             Utils.HandleError(errorCode, err);
@@ -144,7 +144,11 @@ public partial class Statements : IDisposable
         {
             var err = nint.Zero;
             var namedVals = new NamedValues(namedValues);
-            var errorCode = libsql_run_stmt_named(_statements, namedVals._namedValues, out err);
+            var errorCode = libsql_run_stmt_named(
+                _statements,
+                namedVals._namedValuesHandle.DangerousGetHandle(),
+                out err
+            );
             Utils.HandleError(errorCode, err);
         });
     }

@@ -1,16 +1,32 @@
 using LibSql.Bindings;
 
-namespace LibSql.Test;
+namespace LibSql.Bindings.Test;
 
-public class DatabaseTest : IAsyncLifetime
+public class DatabaseTest : IAsyncLifetime, IClassFixture<DatabaseContainer>
 {
+    private readonly DatabaseContainer _databaseContainer;
     public Database memoryDb = null!;
+    public Database remoteDb = null!;
+    public Database replicaDb = null!;
     public Connection memoryConnection = null!;
+
+    public DatabaseTest(DatabaseContainer databaseContainer)
+    {
+        _databaseContainer = databaseContainer;
+    }
 
     public async Task InitializeAsync()
     {
+        await _databaseContainer.libsqlContainer.StartAsync();
+        var url =
+            $"http://{_databaseContainer.libsqlContainer.Hostname}:{_databaseContainer.libsqlContainer.GetMappedPublicPort(8080)}";
+
         memoryDb = await Database.OpenLocalFile(":memory:");
         memoryConnection = memoryDb.Connect();
+
+        remoteDb = await Database.OpenRemote(url, "");
+
+        replicaDb = await Database.OpenSync("test-remote.db", url, "", true);
     }
 
     public Task DisposeAsync()
@@ -21,24 +37,24 @@ public class DatabaseTest : IAsyncLifetime
     [Fact]
     public async Task OpenRemoteReplica()
     {
-        var db = await Database.OpenSync("test-remote.db", "libsql://todo.....", "eyJh......", true);
-        Assert.NotNull(db);
+        Assert.NotNull(replicaDb);
 
-        var connection = db.Connect();
+        var connection = replicaDb.Connect();
         var rows = await connection.Query("PRAGMA database_list;");
 
         Assert.Equal(3, rows.ColumnCount());
 
-
-        var created_rows = await connection.Execute("CREATE TABLE IF NOT EXISTS test_replicated (azar)");
+        var created_rows = await connection.Execute(
+            "CREATE TABLE IF NOT EXISTS test_replicated (azar)"
+        );
         Assert.Equal((ulong)0, created_rows);
-        
+
         await connection.Execute("INSERT INTO test_replicated VALUES ('clear')");
 
-        var replicated = await db.Sync();
+        var replicated = await replicaDb.Sync();
 
         // Assert.Equal(1, replicated.FramesSynced);
-        Assert.Equal(1, replicated.FrameNo);
+        Assert.Equal(2, replicated.FrameNo);
 
         // await memoryConnection.Execute("DROP TABLE test_replicated");
     }
@@ -58,12 +74,7 @@ public class DatabaseTest : IAsyncLifetime
     [Fact]
     public async Task OpenRemote()
     {
-        string authToken =
-            "eyJh....";
-        string url = "libsql://ele......";
-        var db = await Database.OpenRemote(url, authToken);
-
-        var connection = db.Connect();
+        var connection = remoteDb.Connect();
         var rows = await connection.Query("PRAGMA database_list;");
 
         Assert.Equal(3, rows.ColumnCount());
@@ -123,7 +134,6 @@ public class DatabaseTest : IAsyncLifetime
         Assert.Equal("hello", row!.GetString(1));
     }
 
-
     [Fact]
     public async Task LocalStatements()
     {
@@ -144,10 +154,9 @@ public class DatabaseTest : IAsyncLifetime
         await insert_statement.Run(("@name", "tes"));
         await insert_statement.Run();
 
-
         var rows = await memoryConnection.Query("SELECT COUNT(*) FROM things WHERE name='hi'");
         var row = await rows.GetNextRow();
-    
+
         Assert.Equal(3, row!.GetInt(0));
 
         // var stmt = await memoryConnection.Prepare("SELECT * FROM users");

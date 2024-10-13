@@ -11,6 +11,9 @@ internal abstract class LibSqlSafeHandle : SafeHandle
         SetHandle(ptr);
     }
 
+    public LibSqlSafeHandle()
+        : base(nint.Zero, true) { }
+
     public override bool IsInvalid => nint.Zero == handle;
 }
 
@@ -40,20 +43,30 @@ internal partial class Utils
     }
 }
 
+internal class PositionalValuesHandle : LibSqlSafeHandle
+{
+    public PositionalValuesHandle()
+        : base()
+    {
+        PositionalValues.libsql_make_positional_values(out var posValuesPtr);
+        SetHandle(posValuesPtr);
+    }
+
+    protected override bool ReleaseHandle()
+    {
+        PositionalValues.libsql_free_positional_values(handle);
+        return true;
+    }
+}
+
 internal partial class PositionalValues
 {
-    internal IntPtr _positionalValues;
+    internal PositionalValuesHandle _positionalValues = new();
 
-    private bool disposed = false;
-
-    internal PositionalValues()
-    {
-        libsql_make_positional_values(out _positionalValues);
-    }
+    internal PositionalValues() { }
 
     internal PositionalValues(Value?[] positionalValues)
     {
-        libsql_make_positional_values(out _positionalValues);
         for (int i = 0; i < positionalValues.Length; i++)
         {
             Set(positionalValues[i], (uint)i);
@@ -62,30 +75,10 @@ internal partial class PositionalValues
 
     internal PositionalValues(object?[] positionalValues)
     {
-        libsql_make_positional_values(out _positionalValues);
         for (int i = 0; i < positionalValues.Length; i++)
         {
             Set(Value.FromObject(positionalValues[i]), (uint)i);
         }
-    }
-
-    public void Dispose()
-    {
-        if (this.disposed)
-            return;
-
-        if (_positionalValues != IntPtr.Zero)
-        {
-            libsql_free_positional_values(_positionalValues);
-        }
-
-        GC.SuppressFinalize(this);
-        disposed = true;
-    }
-
-    ~PositionalValues()
-    {
-        Dispose();
     }
 
     public unsafe void Set(Value? value, uint idx)
@@ -142,7 +135,7 @@ internal partial class PositionalValues
     [LibraryImport(Utils.__DllName, EntryPoint = "libsql_positional_bind_int")]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_positional_bind_int(
-        IntPtr pos_values,
+        PositionalValuesHandle pos_values,
         uint idx,
         long value,
         out IntPtr out_err_msg
@@ -151,7 +144,7 @@ internal partial class PositionalValues
     [LibraryImport(Utils.__DllName, EntryPoint = "libsql_positional_bind_float")]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_positional_bind_float(
-        IntPtr pos_values,
+        PositionalValuesHandle pos_values,
         uint idx,
         double value,
         out IntPtr out_err_msg
@@ -160,7 +153,7 @@ internal partial class PositionalValues
     [LibraryImport(Utils.__DllName, EntryPoint = "libsql_positional_bind_null")]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_positional_bind_null(
-        IntPtr pos_values,
+        PositionalValuesHandle pos_values,
         uint idx,
         out IntPtr out_err_msg
     );
@@ -172,7 +165,7 @@ internal partial class PositionalValues
     )]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_positional_bind_string(
-        IntPtr pos_values,
+        PositionalValuesHandle pos_values,
         uint idx,
         string value,
         out IntPtr out_err_msg
@@ -181,7 +174,7 @@ internal partial class PositionalValues
     [LibraryImport(Utils.__DllName, EntryPoint = "libsql_positional_bind_blob")]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_positional_bind_blob(
-        IntPtr pos_values,
+        PositionalValuesHandle pos_values,
         uint idx,
         IntPtr value,
         int value_len,
@@ -189,20 +182,30 @@ internal partial class PositionalValues
     );
 }
 
+internal class NamedValuesHandle : LibSqlSafeHandle
+{
+    public NamedValuesHandle()
+        : base()
+    {
+        NamedValues.libsql_make_namedvalues(out var namedValuesPtr);
+        SetHandle(namedValuesPtr);
+    }
+
+    protected override bool ReleaseHandle()
+    {
+        NamedValues.libsql_free_namedvalues(handle);
+        return true;
+    }
+}
+
 internal partial class NamedValues
 {
-    internal IntPtr _namedValues;
+    internal NamedValuesHandle _namedValuesHandle = new();
 
-    private bool disposed = false;
-
-    internal NamedValues()
-    {
-        libsql_make_namedvalues(out _namedValues);
-    }
+    internal NamedValues() { }
 
     internal NamedValues((string, Value?)[] namedValues)
     {
-        libsql_make_namedvalues(out _namedValues);
         for (int i = 0; i < namedValues.Length; i++)
         {
             Set(namedValues[i].Item1, namedValues[i].Item2);
@@ -211,30 +214,10 @@ internal partial class NamedValues
 
     internal NamedValues((string, object?)[] namedValues)
     {
-        libsql_make_namedvalues(out _namedValues);
         for (int i = 0; i < namedValues.Length; i++)
         {
             Set(namedValues[i].Item1, Value.FromObject(namedValues[i].Item2));
         }
-    }
-
-    public void Dispose()
-    {
-        if (this.disposed)
-            return;
-
-        if (_namedValues != IntPtr.Zero)
-        {
-            libsql_free_namedvalues(_namedValues);
-        }
-
-        GC.SuppressFinalize(this);
-        disposed = true;
-    }
-
-    ~NamedValues()
-    {
-        Dispose();
     }
 
     public unsafe void Set(string name, Value? value)
@@ -245,7 +228,7 @@ internal partial class NamedValues
             fixed (byte* blobRaw = blob)
             {
                 return libsql_named_bind_blob(
-                    _namedValues,
+                    _namedValuesHandle,
                     name,
                     (IntPtr)blobRaw,
                     blob.Length,
@@ -256,21 +239,26 @@ internal partial class NamedValues
 
         var errorCode = value switch
         {
-            IntValue intValue => libsql_named_bind_int(_namedValues, name, intValue.Value, out err),
+            IntValue intValue => libsql_named_bind_int(
+                _namedValuesHandle,
+                name,
+                intValue.Value,
+                out err
+            ),
             StringValue stringValue => libsql_named_bind_string(
-                _namedValues,
+                _namedValuesHandle,
                 name,
                 stringValue.Value,
                 out err
             ),
             FloatValue floatValue => libsql_named_bind_float(
-                _namedValues,
+                _namedValuesHandle,
                 name,
                 floatValue.Value,
                 out err
             ),
             BlobValue blobValue => handleBlob(blobValue.Value, out err),
-            null => libsql_named_bind_null(_namedValues, name, out err),
+            null => libsql_named_bind_null(_namedValuesHandle, name, out err),
             _ => throw new LibSqlException("Value not considered"),
         };
         Utils.HandleError(errorCode, err);
@@ -291,7 +279,7 @@ internal partial class NamedValues
     )]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_named_bind_int(
-        IntPtr named_vals,
+        NamedValuesHandle named_vals,
         string name,
         long value,
         out IntPtr out_err_msg
@@ -304,7 +292,7 @@ internal partial class NamedValues
     )]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_named_bind_float(
-        IntPtr named_vals,
+        NamedValuesHandle named_vals,
         string name,
         double value,
         out IntPtr out_err_msg
@@ -317,7 +305,7 @@ internal partial class NamedValues
     )]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_named_bind_null(
-        IntPtr named_vals,
+        NamedValuesHandle named_vals,
         string name,
         out IntPtr out_err_msg
     );
@@ -329,7 +317,7 @@ internal partial class NamedValues
     )]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_named_bind_string(
-        IntPtr named_vals,
+        NamedValuesHandle named_vals,
         string name,
         string value,
         out IntPtr out_err_msg
@@ -342,7 +330,7 @@ internal partial class NamedValues
     )]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_named_bind_blob(
-        IntPtr named_vals,
+        NamedValuesHandle named_vals,
         string name,
         IntPtr value,
         int value_len,

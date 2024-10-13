@@ -1,3 +1,5 @@
+using System.Collections;
+
 namespace LibSql.Bindings;
 
 public enum ColumnType
@@ -9,7 +11,7 @@ public enum ColumnType
     NULL = 5,
 }
 
-public partial class Rows : IDisposable
+public partial class Rows : IDisposable, IAsyncEnumerable<Row>
 {
     internal RowsHandle _rows;
 
@@ -71,5 +73,25 @@ public partial class Rows : IDisposable
     public void Dispose()
     {
         _rows.Dispose();
+    }
+
+    public async IAsyncEnumerator<Row> GetAsyncEnumerator(
+        CancellationToken cancellationToken = default
+    )
+    {
+        cancellationToken.ThrowIfCancellationRequested(); // IDK about this approach
+        var ended = false;
+        while (!ended)
+        {
+            var row = await GetNextRow();
+            if (row is null)
+            {
+                ended = true;
+            }
+            else
+            {
+                yield return row;
+            }
+        }
     }
 }

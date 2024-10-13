@@ -43,7 +43,12 @@ public partial class Connection
 
     [LibraryImport(Utils.__DllName, EntryPoint = "libsql_transaction_with_behavior")]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
-    internal static partial int libsql_transaction_with_behavior(SafeHandle conn, out IntPtr out_transaction, int transaction_behavior, out IntPtr out_err_msg);
+    internal static partial int libsql_transaction_with_behavior(
+        SafeHandle conn,
+        out IntPtr out_transaction,
+        int transaction_behavior,
+        out IntPtr out_err_msg
+    );
 
     [LibraryImport(Utils.__DllName, EntryPoint = "libsql_reset")]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -58,6 +63,7 @@ public partial class Connection
         EntryPoint = "libsql_prepare",
         StringMarshalling = StringMarshalling.Utf8
     )]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_prepare(
         SafeHandle conn,
         string sql,
@@ -70,6 +76,7 @@ public partial class Connection
         EntryPoint = "libsql_query",
         StringMarshalling = StringMarshalling.Utf8
     )]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_query(
         SafeHandle conn,
         string sql,
@@ -82,6 +89,7 @@ public partial class Connection
         EntryPoint = "libsql_query_positional",
         StringMarshalling = StringMarshalling.Utf8
     )]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_query_positional(
         SafeHandle conn,
         string sql,
@@ -95,6 +103,7 @@ public partial class Connection
         EntryPoint = "libsql_query",
         StringMarshalling = StringMarshalling.Utf8
     )]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_query_named(
         SafeHandle conn,
         string sql,
@@ -121,6 +130,7 @@ public partial class Connection
         EntryPoint = "libsql_execute_positional",
         StringMarshalling = StringMarshalling.Utf8
     )]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_execute_positional(
         SafeHandle conn,
         string sql,
@@ -134,6 +144,7 @@ public partial class Connection
         EntryPoint = "libsql_execute_named",
         StringMarshalling = StringMarshalling.Utf8
     )]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial int libsql_execute_named(
         SafeHandle conn,
         string sql,
@@ -142,8 +153,18 @@ public partial class Connection
         out IntPtr out_err_msg
     );
 
-    // [LibraryImport(Utils.__DllName, EntryPoint = "libsql_execute_batch", StringMarshalling = StringMarshalling.Utf8)]
-    // internal static partial int libsql_execute_batch(SafeHandle conn, string sql, batch_rows_t* out_batch_rows, out IntPtr out_err_msg);
+    [LibraryImport(
+        Utils.__DllName,
+        EntryPoint = "libsql_execute_batch",
+        StringMarshalling = StringMarshalling.Utf8
+    )]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
+    internal static partial int libsql_execute_batch(
+        SafeHandle conn,
+        string sql,
+        out IntPtr out_batch_rows,
+        out IntPtr out_err_msg
+    );
 
     [LibraryImport(Utils.__DllName, EntryPoint = "libsql_changes")]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]

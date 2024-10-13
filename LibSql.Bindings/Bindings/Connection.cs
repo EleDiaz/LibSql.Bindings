@@ -94,7 +94,7 @@ public partial class Connection : IDisposable
             var errorCode = libsql_query_positional(
                 _connection,
                 sql,
-                posVals._positionalValues,
+                posVals._positionalValues.DangerousGetHandle(),
                 out rows,
                 out err
             );
@@ -113,12 +113,24 @@ public partial class Connection : IDisposable
             var errorCode = libsql_query_named(
                 _connection,
                 sql,
-                namedVals._namedValues,
+                namedVals._namedValuesHandle.DangerousGetHandle(),
                 out rows,
                 out err
             );
             Utils.HandleError(errorCode, err);
             return new Rows(new RowsHandle(rows));
+        });
+    }
+
+    public async Task<BatchRows> ExecuteBatch(string sql)
+    {
+        return await Task.Run(() =>
+        {
+            var err = nint.Zero;
+            var batchRows = nint.Zero;
+            var errorCode = libsql_execute_batch(_connection, sql, out batchRows, out err);
+            Utils.HandleError(errorCode, err);
+            return new BatchRows(new BatchRowsHandle(batchRows));
         });
     }
 
@@ -144,7 +156,7 @@ public partial class Connection : IDisposable
             var errorCode = libsql_execute_positional(
                 _connection,
                 sql,
-                posVals._positionalValues,
+                posVals._positionalValues.DangerousGetHandle(),
                 out rowChanges,
                 out err
             );
@@ -163,7 +175,7 @@ public partial class Connection : IDisposable
             var errorCode = libsql_execute_named(
                 _connection,
                 sql,
-                namedVals._namedValues,
+                namedVals._namedValuesHandle.DangerousGetHandle(),
                 out rowChanges,
                 out err
             );
