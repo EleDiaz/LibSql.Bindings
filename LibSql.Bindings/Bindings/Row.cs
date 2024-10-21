@@ -22,7 +22,7 @@ public partial class Row
         IntPtr val;
         var errorCode = libsql_get_string(_row, col, out val, out err);
         Utils.HandleError(errorCode, err);
-        var str = Marshal.PtrToStringAnsi(val);
+        var str = Marshal.PtrToStringUTF8(val);
         Utils.libsql_free_string(val);
         return str;
     }

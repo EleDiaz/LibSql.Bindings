@@ -29,7 +29,7 @@ internal partial class Utils
     {
         if (errorCode != 0 && errMsg != IntPtr.Zero)
         {
-            var error = Marshal.PtrToStringAnsi(errMsg);
+            var error = Marshal.PtrToStringUTF8(errMsg);
             Utils.libsql_free_string(errMsg);
             throw new LibSqlException(error);
         }
@@ -37,7 +37,7 @@ internal partial class Utils
 
     internal static string IntoStringAndFree(IntPtr str)
     {
-        var name = Marshal.PtrToStringAnsi(str);
+        var name = Marshal.PtrToStringUTF8(str);
         Utils.libsql_free_string(str);
         return name ?? ""; // ? Should we throw an exception?
     }

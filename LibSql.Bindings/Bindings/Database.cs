@@ -16,11 +16,11 @@ public struct DbConfig
     {
         return new DbConfigRaw
         {
-            DbPath = Marshal.StringToHGlobalAnsi(DbPath),
-            PrimaryUrl = Marshal.StringToHGlobalAnsi(PrimaryUrl),
-            AuthToken = Marshal.StringToHGlobalAnsi(AuthToken),
+            DbPath = Marshal.StringToCoTaskMemUTF8(DbPath),
+            PrimaryUrl = Marshal.StringToCoTaskMemUTF8(PrimaryUrl),
+            AuthToken = Marshal.StringToCoTaskMemUTF8(AuthToken),
             ReadYourWrites = (byte)(ReadYourWrites ? 1 : 0),
-            EncryptionKey = Marshal.StringToHGlobalAnsi(EncryptionKey),
+            EncryptionKey = Marshal.StringToCoTaskMemUTF8(EncryptionKey),
             SyncInterval = SyncInterval,
             WithWebpki = (byte)(WithWebpki ? 1 : 0),
         };
@@ -149,10 +149,10 @@ public partial class Database : IDisposable
             IntPtr db;
             IntPtr err;
             var errorCode = libsql_open_sync_with_config(configRaw, out db, out err);
-            Marshal.FreeHGlobal(configRaw.DbPath);
-            Marshal.FreeHGlobal(configRaw.PrimaryUrl);
-            Marshal.FreeHGlobal(configRaw.AuthToken);
-            Marshal.FreeHGlobal(configRaw.EncryptionKey);
+            Marshal.FreeCoTaskMem(configRaw.DbPath);
+            Marshal.FreeCoTaskMem(configRaw.PrimaryUrl);
+            Marshal.FreeCoTaskMem(configRaw.AuthToken);
+            Marshal.FreeCoTaskMem(configRaw.EncryptionKey);
             Utils.HandleError(errorCode, err);
             return new Database(new DatabaseHandle(db));
         });
