@@ -33,6 +33,10 @@ public partial class Blob : IDisposable
         _blob = blob;
     }
 
+    public Span<byte> GetSpan() {
+        return _blob.GetSpan();
+    }
+
     [LibraryImport(Utils.__DllName, EntryPoint = "libsql_free_blob")]
     [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
     internal static partial void libsql_free_blob(BlobRaw b);
